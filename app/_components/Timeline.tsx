@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { getDailyContent } from "../_data/dailyContent";
 
 export default function Timeline() {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -73,15 +74,7 @@ export default function Timeline() {
   }, [days]);
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center bg-white relative">
-      {/* <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-blue-500 rounded-full z-10" /> */}
-
-      {selectedDate && (
-        <div className="mb-8 text-xl font-semibold">
-          {formatFullDate(selectedDate)}
-        </div>
-      )}
-
+    <div className="w-full h-screen flex flex-col items-center justify-start gap-24 bg-white relative ">
       <div ref={scrollRef} className="w-full overflow-x-auto  scrollbar-hide">
         <div className="flex items-center space-x-8 px-[50vw] h-32">
           {days.map((day, i) => (
@@ -105,6 +98,16 @@ export default function Timeline() {
           ))}
         </div>
       </div>
+      {selectedDate && (
+        <div className="flex flex-col items-center max-w-2xl px-4 mb-8">
+          <div className="text-xl font-semibold mb-4">
+            {formatFullDate(selectedDate)}
+          </div>
+          <p className="text-gray-600 text-center h-48">
+            {getDailyContent(selectedDate)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
