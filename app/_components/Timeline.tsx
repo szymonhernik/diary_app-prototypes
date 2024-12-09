@@ -10,6 +10,10 @@ export default function Timeline() {
   const [centerIndex, setCenterIndex] = useState<number>(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const [scrollDirection, setScrollDirection] = useState<"left" | "right">(
+    "right"
+  );
+  const lastScrollPosition = useRef(0);
 
   // Generate array of past 100 days
   const days = Array.from({ length: 100 }, (_, i) => {
@@ -41,7 +45,11 @@ export default function Timeline() {
     let rafId: number;
 
     const handleScroll = () => {
-      // Set scrolling state
+      const currentScroll = scrollContainer.scrollLeft;
+      setScrollDirection(
+        currentScroll > lastScrollPosition.current ? "right" : "left"
+      );
+      lastScrollPosition.current = currentScroll;
       setIsScrolling(true);
 
       // Clear any existing timeout
@@ -156,15 +164,22 @@ export default function Timeline() {
           <div className="flex flex-col items-center max-w-2xl px-4 mb-8 gap-8">
             <motion.div
               className="w-96 text-sm font-medium uppercase flex justify-center items-center p-4"
-              initial={{ x: 50, opacity: 0 }}
+              initial={{
+                x: scrollDirection === "right" ? 50 : -50,
+                opacity: 0,
+              }}
               animate={{
-                x: isScrolling ? -50 : 0,
+                x: isScrolling ? (scrollDirection === "right" ? -50 : 50) : 0,
                 opacity: isScrolling ? 0 : 1,
               }}
-              exit={{ x: -50, opacity: 0 }}
+              exit={{
+                x: scrollDirection === "right" ? -50 : 50,
+                opacity: 0,
+              }}
               key={selectedDate.toISOString()}
               transition={{
-                duration: 0.2,
+                duration: 0.3,
+                delay: isScrolling ? 0.15 : 0, // Global delay for all properties when scrolling starts
                 ease: "easeInOut",
               }}
             >
