@@ -1,13 +1,15 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { getDailyContent } from "../_data/dailyContent";
 
 export default function Timeline() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [centerIndex, setCenterIndex] = useState<number>(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Generate array of past 100 days
   const days = Array.from({ length: 100 }, (_, i) => {
@@ -35,46 +37,82 @@ export default function Timeline() {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
 
+    let isHandlingScroll = false;
+    let rafId: number;
+
     const handleScroll = () => {
-      requestAnimationFrame(() => {
-        const containerRect = scrollContainer.getBoundingClientRect();
-        const centerX = containerRect.left + containerRect.width / 2;
+      // Set scrolling state
+      setIsScrolling(true);
 
-        let closestDay: HTMLElement | null = null;
-        let minDistance = Infinity;
-        let closestIndex = 0;
+      // Clear any existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
 
-        scrollContainer
-          .querySelectorAll(".day-item")
-          .forEach((dayElement: Element, index: number) => {
-            const dayRect = dayElement.getBoundingClientRect();
-            const distance = Math.abs(
-              dayRect.left + dayRect.width / 2 - centerX
-            );
+      if (!isHandlingScroll) {
+        isHandlingScroll = true;
 
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestDay = dayElement as HTMLElement;
-              closestIndex = index;
-            }
-          });
+        rafId = requestAnimationFrame(() => {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const centerX = containerRect.left + containerRect.width / 2;
 
-        if (closestDay) {
-          const dateIndex = parseInt(closestDay.dataset.index || "0", 10);
-          setSelectedDate(days[dateIndex]);
-          setCenterIndex(closestIndex);
-        }
-      });
+          let closestDay: HTMLElement | null = null;
+          let minDistance = Infinity;
+          let closestIndex = 0;
+
+          scrollContainer
+            .querySelectorAll(".day-item")
+            .forEach((dayElement: Element, index: number) => {
+              const dayRect = dayElement.getBoundingClientRect();
+              const distance = Math.abs(
+                dayRect.left + dayRect.width / 2 - centerX
+              );
+
+              if (distance < minDistance) {
+                minDistance = distance;
+                closestDay = dayElement as HTMLElement;
+                closestIndex = index;
+              }
+            });
+
+          if (closestDay) {
+            const dateIndex = parseInt(closestDay.dataset.index || "0", 10);
+            setCenterIndex(closestIndex); // Update center index immediately for scaling
+
+            // Only update the selected date after scrolling stops
+            scrollTimeoutRef.current = setTimeout(() => {
+              setSelectedDate(days[dateIndex]);
+              setIsScrolling(false);
+            }, 150);
+          }
+
+          isHandlingScroll = false;
+        });
+      }
     };
 
-    scrollContainer.addEventListener("scroll", handleScroll);
-    handleScroll(); // Initial check
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
 
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
-  }, [days]);
+    // Only run initial setup once
+    if (centerIndex === 0) {
+      const initialDateIndex = days.findIndex(
+        (day) => day.toDateString() === new Date().toDateString()
+      );
+      setCenterIndex(initialDateIndex);
+      setSelectedDate(days[initialDateIndex]);
+    }
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handleScroll);
+      cancelAnimationFrame(rafId);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []); // Empty dependency array since we don't need to re-run this effect
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-start gap-24 bg-white relative ">
+    <div className="w-full h-screen flex flex-col items-center justify-start gap-24 bg-white relative">
       <div ref={scrollRef} className="w-full overflow-x-auto  scrollbar-hide">
         <div className="flex items-center space-x-8 px-[50vw] h-32">
           {days.map((day, i) => (
@@ -98,16 +136,30 @@ export default function Timeline() {
           ))}
         </div>
       </div>
-      {selectedDate && (
-        <div className="flex flex-col items-center max-w-2xl px-4 mb-8">
-          <div className="text-xl font-semibold mb-4">
-            {formatFullDate(selectedDate)}
+      <AnimatePresence mode="wait">
+        {selectedDate && (
+          <div className="flex flex-col items-center max-w-2xl px-4 mb-8 gap-8">
+            <motion.div
+              className="w-64 bg-stone-300 flex justify-center items-center p-4"
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              key={selectedDate.toISOString()}
+              transition={{
+                duration: 0.5,
+                ease: "easeInOut",
+              }}
+            >
+              <div className="font-semibold">
+                {formatFullDate(selectedDate)}
+                <span className="ml-2 text-sm text-gray-500">
+                  (Scrolling: {isScrolling ? "yes" : "no"})
+                </span>
+              </div>
+            </motion.div>
           </div>
-          <p className="text-gray-600 text-center h-48">
-            {getDailyContent(selectedDate)}
-          </p>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
