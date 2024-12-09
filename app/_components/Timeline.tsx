@@ -83,7 +83,7 @@ export default function Timeline() {
             scrollTimeoutRef.current = setTimeout(() => {
               setSelectedDate(days[dateIndex]);
               setIsScrolling(false);
-            }, 150);
+            }, 50);
           }
 
           isHandlingScroll = false;
@@ -120,18 +120,33 @@ export default function Timeline() {
               key={i}
               className="day-item flex flex-col items-center min-w-fit"
               data-index={i}
-              animate={{
-                scale:
-                  i === centerIndex
-                    ? 2
-                    : i === centerIndex - 1 || i === centerIndex + 1
-                    ? 1.5
-                    : 1,
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
-              <span className="text-sm font-medium mb-2">{formatDay(day)}</span>
-              <div className="h-4 w-px bg-gray-300" />
+              <motion.span
+                className="text-sm font-medium mb-2"
+                animate={{
+                  y:
+                    i === centerIndex
+                      ? -8
+                      : i === centerIndex - 1 || i === centerIndex + 1
+                      ? -4
+                      : 0,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                {formatDay(day)}
+              </motion.span>
+              <motion.div
+                className="h-4 w-px bg-gray-300"
+                animate={{
+                  scale:
+                    i === centerIndex
+                      ? 2
+                      : i === centerIndex - 1 || i === centerIndex + 1
+                      ? 1.5
+                      : 1,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
             </motion.div>
           ))}
         </div>
@@ -140,21 +155,24 @@ export default function Timeline() {
         {selectedDate && (
           <div className="flex flex-col items-center max-w-2xl px-4 mb-8 gap-8">
             <motion.div
-              className="w-64 bg-stone-300 flex justify-center items-center p-4"
-              initial={{ x: 100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -100, opacity: 0 }}
+              className="w-96 text-sm font-medium uppercase flex justify-center items-center p-4"
+              initial={{ x: 50, opacity: 0 }}
+              animate={{
+                x: isScrolling ? -50 : 0,
+                opacity: isScrolling ? 0 : 1,
+              }}
+              exit={{ x: -50, opacity: 0 }}
               key={selectedDate.toISOString()}
               transition={{
-                duration: 0.5,
+                duration: 0.2,
                 ease: "easeInOut",
               }}
             >
-              <div className="font-semibold">
+              <div className="">
                 {formatFullDate(selectedDate)}
-                <span className="ml-2 text-sm text-gray-500">
+                {/* <span className="ml-2 text-sm text-gray-500">
                   (Scrolling: {isScrolling ? "yes" : "no"})
-                </span>
+                </span> */}
               </div>
             </motion.div>
           </div>
