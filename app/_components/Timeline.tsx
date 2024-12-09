@@ -120,8 +120,11 @@ export default function Timeline() {
   }, []); // Empty dependency array since we don't need to re-run this effect
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-start gap-24 bg-white relative">
-      <div ref={scrollRef} className="w-full overflow-x-auto  scrollbar-hide">
+    <div className="w-full h-screen max-w-screen overflow-x-hidden flex flex-col items-center justify-center gap-24 bg-[#F9F7F0] relative">
+      <div
+        ref={scrollRef}
+        className="w-full absolute top-0 left-0 overflow-x-auto  scrollbar-hide"
+      >
         <div className="flex items-center space-x-8 px-[50vw] h-32">
           {days.map((day, i) => (
             <motion.div
@@ -144,7 +147,7 @@ export default function Timeline() {
                 {formatDay(day)}
               </motion.span>
               <motion.div
-                className="h-4 w-px bg-gray-300"
+                className="h-4 w-px bg-black"
                 animate={{
                   scale:
                     i === centerIndex
@@ -163,13 +166,13 @@ export default function Timeline() {
         {selectedDate && (
           <div className="flex flex-col items-center max-w-2xl px-4 mb-8 gap-8">
             <motion.div
-              className="w-96 text-sm font-medium uppercase flex justify-center items-center p-4"
+              className="w-screen-sm  flex justify-center items-center p-4"
               initial={{
-                x: scrollDirection === "right" ? 50 : -50,
+                x: scrollDirection === "right" ? 20 : -20,
                 opacity: 0,
               }}
               animate={{
-                x: isScrolling ? (scrollDirection === "right" ? -50 : 50) : 0,
+                x: isScrolling ? (scrollDirection === "right" ? -20 : 20) : 0,
                 opacity: isScrolling ? 0 : 1,
               }}
               exit={{
@@ -183,8 +186,12 @@ export default function Timeline() {
                 ease: "easeInOut",
               }}
             >
-              <div className="">
-                {formatFullDate(selectedDate)}
+              <div className="flex flex-col  gap-2">
+                <p className="text-sm font-medium uppercase">
+                  {formatFullDate(selectedDate)}
+                </p>
+                {/* getDailyContent */}
+                <p className="font-medium">{getDailyContent(selectedDate)}</p>
                 {/* <span className="ml-2 text-sm text-gray-500">
                   (Scrolling: {isScrolling ? "yes" : "no"})
                 </span> */}
