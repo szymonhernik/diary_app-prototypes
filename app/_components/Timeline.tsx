@@ -6,8 +6,8 @@ import { getDailyContent } from "../_data/dailyContent";
 
 export default function Timeline() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [centerIndex, setCenterIndex] = useState<number>(0);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [centerIndex, setCenterIndex] = useState<number>(99);
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const [scrollDirection, setScrollDirection] = useState<"left" | "right">(
@@ -101,14 +101,22 @@ export default function Timeline() {
 
     scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Only run initial setup once
-    if (centerIndex === 0) {
-      const initialDateIndex = days.findIndex(
-        (day) => day.toDateString() === new Date().toDateString()
-      );
-      setCenterIndex(initialDateIndex);
-      setSelectedDate(days[initialDateIndex]);
-    }
+    setCenterIndex(days.length - 1);
+    setSelectedDate(days[days.length - 1]);
+
+    // Scroll to the last day immediately
+    setTimeout(() => {
+      const dayElements = scrollContainer.querySelectorAll(".day-item");
+      const lastElement = dayElements[days.length - 1] as HTMLElement;
+      if (lastElement) {
+        const containerWidth = scrollContainer.offsetWidth;
+        const scrollTo =
+          lastElement.offsetLeft -
+          containerWidth / 2 +
+          lastElement.offsetWidth / 2;
+        scrollContainer.scrollLeft = scrollTo;
+      }
+    }, 0);
 
     return () => {
       scrollContainer.removeEventListener("scroll", handleScroll);
@@ -120,17 +128,26 @@ export default function Timeline() {
   }, []);
 
   return (
-    <div className="w-full h-screen max-w-screen overflow-x-hidden flex flex-col items-center justify-center gap-24 bg-[#F9F7F0] relative">
+    <div className="w-screen h-screen max-w-screen overflow-x-hidden flex flex-col items-center justify-center gap-24 bg-[#F9F7F0] relative">
       <div
         ref={scrollRef}
-        className="w-full absolute top-0 left-0 overflow-x-auto  scrollbar-hide"
+        className="w-full absolute top-0 left-0 overflow-x-auto scrollbar-hide"
       >
-        <div className="flex items-center space-x-8 px-[50vw] h-32">
+        <div className="flex w-fit items-center space-x-8 px-[50vw] h-32">
           {days.map((day, i) => (
             <motion.div
               key={i}
-              className="day-item flex flex-col items-center min-w-fit"
+              className={`day-item flex flex-col items-center min-w-fit opacity-0`}
               data-index={i}
+              animate={{
+                opacity:
+                  i === centerIndex
+                    ? 1
+                    : i === centerIndex - 1 || i === centerIndex + 1
+                    ? 0.5
+                    : 0.5,
+              }}
+              transition={{ duration: 0.3, delay: 0.3 }}
             >
               <motion.span
                 className="text-sm font-medium mb-2"
@@ -182,7 +199,7 @@ export default function Timeline() {
               key={selectedDate.toISOString()}
               transition={{
                 duration: 0.3,
-                delay: isScrolling ? 0.15 : 0, // Global delay for all properties when scrolling starts
+                delay: 0.3,
                 ease: "easeInOut",
               }}
             >
