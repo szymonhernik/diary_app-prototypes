@@ -117,7 +117,7 @@ export default function Timeline() {
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, []); // Empty dependency array since we don't need to re-run this effect
+  }, []);
 
   return (
     <div className="w-full h-screen max-w-screen overflow-x-hidden flex flex-col items-center justify-center gap-24 bg-[#F9F7F0] relative">
@@ -190,11 +190,7 @@ export default function Timeline() {
                 <p className="text-sm font-medium uppercase">
                   {formatFullDate(selectedDate)}
                 </p>
-                {/* getDailyContent */}
                 <p className="font-medium">{getDailyContent(selectedDate)}</p>
-                {/* <span className="ml-2 text-sm text-gray-500">
-                  (Scrolling: {isScrolling ? "yes" : "no"})
-                </span> */}
               </div>
             </motion.div>
           </div>
@@ -203,14 +199,3 @@ export default function Timeline() {
     </div>
   );
 }
-
-// Add this to your global CSS to hide scrollbar but maintain functionality
-const styles = `
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`;
